@@ -1,0 +1,26 @@
+{
+    "name": "fjourneau/spreadsheet",
+    "description": "Fonction pour génération spreadsheet",
+    "keywords": [
+        "fjourneau", "Excel"
+    ],
+    "version": "v1.0.0",
+    "authors": [
+        {
+            "name": "Florian JOURNEAU",
+            "email": "florian.journeau@gmail.com",
+            "homepage": "https://www.fjourneau.net/"
+        }
+    ],
+    "require": {
+        "php": ">=7.3",
+        "dompdf/dompdf": "^1.0",
+        "phpoffice/phpspreadsheet": "^1.16"
+    },
+    "autoload": {
+        "psr-4": {
+            "fjourneau\\": "src/"
+         }
+    }
+
+}
