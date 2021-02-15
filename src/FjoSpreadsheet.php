@@ -3,20 +3,21 @@
 namespace fjourneau\Spreadsheet;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use App\Objects\fjoUtilitiesObject as Utilities;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
-use Slim\Http\Response;
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
+use PhpOffice\PhpSpreadsheet\Exception;
 
 /**
  * Classe améliorée pour sites FJO pour génération extract XLS
  *
- * @author    fJourneau
+ * @package fjourneau\Spreadsheet
+ * @author fJourneau
  */
-class SpreadsheetFjo extends Spreadsheet
+class FjoSpreadsheet extends Spreadsheet
 {
 
     /**
@@ -132,23 +133,25 @@ class SpreadsheetFjo extends Spreadsheet
     /**
      * Déplace le curseur à droite sur la même ligne
      *
+     * @param  int $step Déplacement sur nombre de cellule spécifié (par défaut 1)
      * @return void
      */
-    public function moveCursor(): SpreadsheetFjo
+    public function moveCursor(int $step = 1): FjoSpreadsheet
     {
-        $this->col++;
+        $this->col = $this->col + $step;
         return $this;
     }
 
     /**
      * Faire passer le curseur sur une nouvelle ligne
      *
+     * @param  int $nbLines Nombre de retour à la ligne (par défaut 1)
      * @return void
      */
-    public function newLineCursor()
+    public function newLineCursor(int $nbLines = 1): FjoSpreadsheet
     {
         $this->col = $this->startCol;
-        $this->row++;
+        $this->row = $this->row + $nbLines;
 
         return $this;
     }
@@ -188,6 +191,12 @@ class SpreadsheetFjo extends Spreadsheet
      */
     public function setTabTitle(string $title, int $index = 0)
     {
+        try {
+            $this->setActiveSheetIndex($index);
+        } catch (Exception $e) {
+            $this->createSheet();
+            $this->setActiveSheetIndex($index);
+        }
         $this->setActiveSheetIndex($index);
         $this->getActiveSheet()->setTitle($title);
     }
@@ -204,14 +213,27 @@ class SpreadsheetFjo extends Spreadsheet
     }
 
     /**
+     * Défini la feuille en cours au format Portrait A4.
+     *
+     * @return void
+     */
+    public function formatSheetPortraitA4(): void
+    {
+        $this->getActiveSheet()->getPageSetup()
+            ->setOrientation(PageSetup::ORIENTATION_PORTRAIT)
+            ->setPaperSize(PageSetup::PAPERSIZE_A4);
+    }
+
+
+    /**
      * Génère le fichier XLSX à télécharger ou sauver sur le serveur
      *
-     * @param  Response $response (Slim Response)
+     * @param  FjoResponseInterface|null $response (Slim Response)
      * @param  string $filename Nom du fichier à télécharger ou endroit où sauvegarder sur le serveur
      * @param  mixed $download TRUE pour téléchargement ou FALSE pour sauver sur le serveur
-     * @return Response
+     * @return FjoResponseInterface|null
      */
-    public function generateExcelFile(?Response $response, $filename = 'file.xlsx', bool $download = true): Response
+    public function generateExcelFile(?FjoResponseInterface $response, $filename = 'file.xlsx', bool $download = true): FjoResponseInterface
     {
         if ($download) {
             $responseXls = $response->withHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -237,14 +259,14 @@ class SpreadsheetFjo extends Spreadsheet
     }
 
     /**
-     * Génère le fichier ODS à télécharger ou sauver sur le serveur
+     * Génère le fichier ODS (open office) à télécharger ou sauver sur le serveur
      *
-     * @param  Response $response (Slim Response)
+     * @param  FjoResponseInterface|null $response (Slim Response)
      * @param  string $filename Nom du fichier à télécharger ou endroit où sauvegarder sur le serveur
      * @param  mixed $download TRUE pour téléchargement ou FALSE pour sauver sur le serveur
-     * @return Response
+     * @return FjoResponseInterface|null
      */
-    public function generateOdsFile(?Response $response, $filename = 'file.ods', bool $download = true): Response
+    public function generateOdsFile(?FjoResponseInterface $response, $filename = 'file.ods', bool $download = true): ?FjoResponseInterface
     {
         if ($download) {
             $responseXls = $response->withHeader('Content-Type', 'application/vnd.oasis.opendocument.text')
@@ -272,12 +294,12 @@ class SpreadsheetFjo extends Spreadsheet
     /**
      * Génère le fichier ODS à télécharger ou sauver sur le serveur
      *
-     * @param  Response $response (Slim Response)
+     * @param  FjoResponseInterface|null $response (Slim Response)
      * @param  string $filename Nom du fichier à télécharger ou endroit où sauvegarder sur le serveur
      * @param  mixed $download TRUE pour téléchargement ou FALSE pour sauver sur le serveur
-     * @return Response
+     * @return FjoResponseInterface|null
      */
-    public function generatePdfFile(?Response $response, $filename = 'file.ods', bool $download = true): Response
+    public function generatePdfFile(?FjoResponseInterface $response, $filename = 'file.ods', bool $download = true): ?FjoResponseInterface
     {
         if ($download) {
             $responseXls = $response->withHeader('Content-Type', 'application/pdf')
