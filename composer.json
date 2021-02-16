@@ -2,7 +2,8 @@
     "name": "fjourneau/spreadsheet",
     "description": "Fonction pour génération spreadsheet",
     "keywords": [
-        "fjourneau", "Excel"
+        "fjourneau",
+        "Excel"
     ],
     "version": "v1.0.0",
     "authors": [
@@ -20,7 +21,6 @@
     "autoload": {
         "psr-4": {
             "fjourneau\\Spreadsheet\\": "src/"
-         }
+        }
     }
-
 }

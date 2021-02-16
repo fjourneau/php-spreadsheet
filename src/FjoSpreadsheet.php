@@ -99,6 +99,36 @@ class FjoSpreadsheet extends Spreadsheet
         $this->col = $this->startCol = $col;
         $this->row = $this->StartRow = $row;
     }
+    
+    /**
+     * Retourne la position actuelle du cusreur ligne
+     *
+     * @return int
+     */
+    public function getCursorRow(): int
+    {
+        return $this->row;
+    }
+        
+    /**
+     * Retourne la position actuelle du cusreur colonne (N° et non lettre de colonne)
+     *
+     * @return int
+     */
+    public function getCursorCol(): int
+    {
+        return $this->col;
+    }
+
+    /**
+     * Retourne la position actuelle du cusreur colonne (Lettre colonne)
+     *
+     * @return int
+     */
+    public function getCursorColName(): string
+    {
+        return $this->colArray[$this->col];
+    }
 
     /**
      * Mettre une valeur dans une cellule où le curseur se trouve
