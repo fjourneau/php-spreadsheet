@@ -11,6 +11,7 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 use PhpOffice\PhpSpreadsheet\Exception;
 
+
 /**
  * Classe améliorée pour sites FJO pour génération extract XLS
  *
@@ -224,104 +225,22 @@ class FjoSpreadsheet extends Spreadsheet
             ->setPaperSize(PageSetup::PAPERSIZE_A4);
     }
 
-
     /**
-     * Génère le fichier XLSX à télécharger ou sauver sur le serveur
+     * Génère le fichier et le propose en téléchargement.
      *
-     * @param  FjoResponseInterface|null $response (Slim Response)
-     * @param  string $filename Nom du fichier à télécharger ou endroit où sauvegarder sur le serveur
-     * @param  mixed $download TRUE pour téléchargement ou FALSE pour sauver sur le serveur
-     * @return FjoResponseInterface|null
+     * @param  string $filename Nom du fichier à télécharger 
      */
-    public function generateExcelFile(?FjoResponseInterface $response, $filename = 'file.xlsx', bool $download = true): FjoResponseInterface
+    public function generateFile($filename = 'file.xlsx'): void
     {
-        if ($download) {
-            $responseXls = $response->withHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                ->withHeader('Content-Disposition', 'attachment;filename="' . $filename . '"')
-                ->withHeader('Cache-Control', 'max-age=0')
-                ->withHeader('Expires', 'Mon, 26 Jul 1997 05:00:00 GMT')  // date in the past
-                ->withHeader('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT')
-                ->withHeader('Cache-Control', 'cache, must-revalidate')  // HTTP/1.1
-                ->withHeader('Pragma', 'private');   // HTTP/1.0
 
-            $writer = IOFactory::createWriter($this, 'Xlsx');
+        $headers = $this->getHttpHeaders($filename);
 
-            ob_start();
-            $writer->save('php://output');
-            $xls_content = ob_get_clean();
-
-            return $responseXls->write($xls_content);
-        } else {
-            $writer = IOFactory::createWriter($this, 'Xlsx');
-            $writer->save($filename);
-            return $response->write("Fichier $filename généré à la racine du site.");
+        foreach ($headers as $key => $val) {
+            header("$key: $val");
         }
-    }
 
-    /**
-     * Génère le fichier ODS (open office) à télécharger ou sauver sur le serveur
-     *
-     * @param  FjoResponseInterface|null $response (Slim Response)
-     * @param  string $filename Nom du fichier à télécharger ou endroit où sauvegarder sur le serveur
-     * @param  mixed $download TRUE pour téléchargement ou FALSE pour sauver sur le serveur
-     * @return FjoResponseInterface|null
-     */
-    public function generateOdsFile(?FjoResponseInterface $response, $filename = 'file.ods', bool $download = true): ?FjoResponseInterface
-    {
-        if ($download) {
-            $responseXls = $response->withHeader('Content-Type', 'application/vnd.oasis.opendocument.text')
-                ->withHeader('Content-Disposition', 'attachment;filename="' . $filename . '"')
-                ->withHeader('Cache-Control', 'max-age=0')
-                ->withHeader('Expires', 'Mon, 26 Jul 1997 05:00:00 GMT')  // date in the past
-                ->withHeader('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT')
-                ->withHeader('Cache-Control', 'cache, must-revalidate')  // HTTP/1.1
-                ->withHeader('Pragma', 'private');   // HTTP/1.0
-
-            $writer = IOFactory::createWriter($this, 'Ods');
-
-            ob_start();
-            $writer->save('php://output');
-            $xls_content = ob_get_clean();
-
-            return $responseXls->write($xls_content);
-        } else {
-            $writer = IOFactory::createWriter($this, 'Ods');
-            $writer->save($filename);
-            return $response->write("Fichier $filename généré à la racine du site.");
-        }
-    }
-
-    /**
-     * Génère le fichier ODS à télécharger ou sauver sur le serveur
-     *
-     * @param  FjoResponseInterface|null $response (Slim Response)
-     * @param  string $filename Nom du fichier à télécharger ou endroit où sauvegarder sur le serveur
-     * @param  mixed $download TRUE pour téléchargement ou FALSE pour sauver sur le serveur
-     * @return FjoResponseInterface|null
-     */
-    public function generatePdfFile(?FjoResponseInterface $response, $filename = 'file.ods', bool $download = true): ?FjoResponseInterface
-    {
-        if ($download) {
-            $responseXls = $response->withHeader('Content-Type', 'application/pdf')
-                ->withHeader('Content-Disposition', 'attachment;filename="' . $filename . '"')
-                ->withHeader('Cache-Control', 'max-age=0')
-                ->withHeader('Expires', 'Mon, 26 Jul 1997 05:00:00 GMT')  // date in the past
-                ->withHeader('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT')
-                ->withHeader('Cache-Control', 'cache, must-revalidate')  // HTTP/1.1
-                ->withHeader('Pragma', 'private');   // HTTP/1.0
-
-            $writer = IOFactory::createWriter($this, 'Dompdf');
-
-            ob_start();
-            $writer->save('php://output');
-            $xls_content = ob_get_clean();
-
-            return $responseXls->write($xls_content);
-        } else {
-            $writer = IOFactory::createWriter($this, 'Dompdf');
-            $writer->save($filename);
-            return $response->write("Fichier $filename généré à la racine du site.");
-        }
+        $writer = IOFactory::createWriter($this, $this->getFilenameInfos($filename)['writer']);
+        $writer->save('php://output');
     }
 
 
@@ -449,6 +368,53 @@ class FjoSpreadsheet extends Spreadsheet
             102 => 'CX',
             103 => 'CY',
             104 => 'CZ'
+        ];
+    }
+
+
+    protected function getFilenameInfos(string $filename): array
+    {
+        switch ($ext = strtolower(pathinfo($filename)['extension'])) {
+            case 'xlsx':
+                $mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                $writer = "Xlsx";
+                break;
+
+            case 'ods':
+                $mime = "application/vnd.oasis.opendocument.text";
+                $writer = "Ods";
+                break;
+
+            case 'pdf':
+                $mime = "application/pdf";
+                $writer = "Dompdf";
+                break;
+
+            default:
+                throw new Exception("Extension $ext non définie, traitement du fichier $filename impossible.\n<br>");
+                break;
+        }
+
+        return [
+            'mime-type' => $mime,
+            'writer' => $writer,
+            'extension' => $ext
+        ];
+    }
+
+    protected function getHttpHeaders(string $filename): array
+    {
+
+        $mime = $this->getFilenameInfos($filename)['mime-type'];
+
+        return [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'attachment;filename="' . $filename . '"',
+            'Cache-Control' => 'max-age=0',
+            'Expires' => 'Mon, 26 Jun 1984 05:00:00 GMT', // date dans le passé volontaire
+            'Last-Modified' => gmdate('D, d M Y H:i:s'),
+            'Cache-Control' => 'cache, must-revalidate',
+            'Pragma' => 'private'   // HTTP/1.0
         ];
     }
 }
