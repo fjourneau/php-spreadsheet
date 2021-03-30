@@ -150,7 +150,7 @@ class FjoSpreadsheet extends Spreadsheet
      * @param  string $curr 'EUR' ou 'USD'
      * @return void
      */
-    public function setCursorValueCurrency(float $val, $curr = 'EUR')
+    public function setCursorValueCurrency(?float $val, $curr = 'EUR')
     {
         $cellName = $this->_getCellNameFromCursor();
         if ($curr == 'EUR') {
