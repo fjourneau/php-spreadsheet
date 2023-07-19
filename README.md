@@ -1,4 +1,5 @@
 # php-spreadsheet
+<img alt="Status NOT MAINTAINED" src="https://img.shields.io/badge/Status-NOT MAINTAINED-%3CCOLOR%3E?style=for-the-badge&color=d00000">
 
 ## Install via composer
 
